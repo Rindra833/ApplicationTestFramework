@@ -1,0 +1,36 @@
+FRAMEWORK:
+
+Framework/
+│
+├── src/
+│   └── mg/
+│       └── framework/
+│           └── FrontServlet.java
+│
+├── build/
+│
+├── lib/
+│   └── servlet-api.jar
+│
+├── build-framework.sh
+│
+└── framework.jar
+
+APPLICATION_TEST
+
+ApplicationTest/
+│
+├── src/
+│
+├── src/main/
+│   └── webapp/
+│       ├── index.jsp
+│       │
+│       └── WEB-INF/
+│           ├── web.xml
+│           └── lib/
+│               └── framework.jar
+│
+├── build/
+│
+└── deploy.sh
