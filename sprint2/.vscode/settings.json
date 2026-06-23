@@ -1,0 +1,6 @@
+{
+    "java.project.referencedLibraries": [
+        "lib/**/*.jar",
+        "FRAMEWORK SPRINT MVC HASNER/sprint-mvc-framework.jar"
+    ]
+}
