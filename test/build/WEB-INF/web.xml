@@ -5,13 +5,24 @@
     http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
     version="2.4">
     <display-name>name</display-name>
-<servlet>
-    <servlet-name>FrontControllerServlet</servlet-name>
-    <servlet-class>servlet.FrontControllerServlet</servlet-class>
-</servlet>
+    <servlet>
+        <servlet-name>FrontControllerServlet</servlet-name>
+        <servlet-class>Genius.servlet.FrontControllerServlet</servlet-class>
 
-<servlet-mapping>
-    <servlet-name>FrontControllerServlet</servlet-name>
-    <url-pattern>/*</url-pattern>
-</servlet-mapping>
+        <init-param>
+            <param-name>prefix</param-name>
+            <param-value></param-value>
+        </init-param>
+
+        <init-param>
+            <param-name>suffix</param-name>
+            <param-value>.jsp</param-value>
+        </init-param>
+
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>FrontControllerServlet</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
 </web-app>
