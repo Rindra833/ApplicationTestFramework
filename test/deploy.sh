@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Définition des variables
-APP_NAME="Sprint0304"
+APP_NAME="Sprint05"
 SRC_DIR="src/main/java"
 # Dans ton projet les JSP et le web.xml sont dans src/main/webapps
 WEB_DIR="src/main/webapps"
