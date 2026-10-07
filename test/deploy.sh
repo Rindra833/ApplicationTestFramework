@@ -1,44 +1,50 @@
 #!/bin/bash
+set -e
 
-# Définition des variables
-APP_NAME="Sprint05"
-SRC_DIR="src/main/java"
-# Dans ton projet les JSP et le web.xml sont dans src/main/webapps
-WEB_DIR="src/main/webapps"
+APP_NAME="sprint6"
+SRC_DIR="src"
+WEB_DIR="WebContent"
 BUILD_DIR="build"
-LIB_DIR="lib"
-TOMCAT_WEBAPPS="/home/rindra/Documents/tomcat/apache-tomcat-10.0.16/webapps"
-SERVLET_API_JAR=$(echo lib/*.jar | tr ' ' ':')
+LIB_DIR="WebContent/WEB-INF/lib"
+TOMCAT_WEBAPPS="${CATALINA_HOME}/webapps"
 
-# Nettoyage et création du répertoire temporaire
-# rm -rf "$BUILD_DIR"
+# Nettoyage
+rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR/WEB-INF/classes"
 mkdir -p "$BUILD_DIR/WEB-INF/lib"
+mkdir -p "$BUILD_DIR/WEB-INF"
 
-# Compilation des fichiers Java avec le JAR des Servlets
+# Compilation
+echo ">>> Compilation..."
+CLASSPATH="$(echo $LIB_DIR/*.jar | tr ' ' ':')"
 find "$SRC_DIR" -name "*.java" > sources.txt
-javac -cp "$SERVLET_API_JAR" -d "$BUILD_DIR/WEB-INF/classes" @sources.txt
+javac -cp "$CLASSPATH" -d "$BUILD_DIR/WEB-INF/classes" @sources.txt
 rm -f sources.txt
 
-# Copier les fichiers web (web.xml, JSP, etc.)
-cp -r "$WEB_DIR/"* "$BUILD_DIR/"
-# On déplace le web.xml à sa place standard dans WEB-INF
-if [ -f "$BUILD_DIR/web.xml" ]; then
-  mv -f "$BUILD_DIR/web.xml" "$BUILD_DIR/WEB-INF/web.xml"
+# Copie des ressources web
+cp -r "$WEB_DIR"/* "$BUILD_DIR/"
+
+# Copie des libs (sauf servlet-api si fourni par Tomcat)
+for j in "$LIB_DIR"/*.jar; do
+  base=$(basename "$j")
+  if [[ "$base" != "jakarta.servlet-api-6.0.0.jar" ]]; then
+    cp -f "$j" "$BUILD_DIR/WEB-INF/lib/"
+  fi
+done
+
+# WAR
+echo ">>> Creation du WAR..."
+cd "$BUILD_DIR"
+jar -cf "../dist-${APP_NAME}.war" .
+cd ..
+mkdir -p dist
+mv "dist-${APP_NAME}.war" "dist/${APP_NAME}.war"
+
+# Déploiement
+if [ -n "$TOMCAT_WEBAPPS" ] && [ -d "$TOMCAT_WEBAPPS" ]; then
+  cp -f "dist/${APP_NAME}.war" "$TOMCAT_WEBAPPS/"
+  echo ">>> Deploye dans $TOMCAT_WEBAPPS"
 fi
 
-# Copier les librairies nécessaires dans WEB-INF/lib (optionnel mais recommandé)
-cp -f "$LIB_DIR"/*.jar "$BUILD_DIR/WEB-INF/lib/" 2>/dev/null || true
-
-# Générer le fichier .war dans le dossier build
-cd "$BUILD_DIR" || exit 
-jar -cvf "$APP_NAME.war" *
-cd ..
-
-# Déploiement dans Tomcat
-cp -f "$BUILD_DIR/$APP_NAME.war" "$TOMCAT_WEBAPPS/"
-
 echo ""
-echo "Déploiement terminé. Copie de $APP_NAME.war dans $TOMCAT_WEBAPPS."
-echo "Redémarrez Tomcat si nécessaire."
-echo ""
+echo "WAR genere : dist/${APP_NAME}.war"
