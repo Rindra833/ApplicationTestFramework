@@ -13,12 +13,12 @@
     </context-param>
 
     <listener>
-        <listener-class>mg.hasner.framework.FrameworkContextListener</listener-class>
+        <listener-class>mg.rr.framework.FrameworkContextListener</listener-class>
     </listener>
 
     <servlet>
         <servlet-name>FrontControllerServlet</servlet-name>
-        <servlet-class>mg.hasner.framework.FrontControllerServlet</servlet-class>
+        <servlet-class>mg.rr.framework.FrontControllerServlet</servlet-class>
         <init-param>
             <param-name>viewPrefix</param-name>
             <param-value>/</param-value>

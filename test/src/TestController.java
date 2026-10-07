@@ -1,11 +1,11 @@
 package test;
 
-import mg.hasner.framework.Controller;
-import mg.hasner.framework.APIRest;      // ← corrigé
-import mg.hasner.framework.HttpMethod;
-import mg.hasner.framework.ModelAndView;
-import mg.hasner.framework.SpringContext;
-import mg.hasner.framework.UrlMapping;
+import mg.rr.framework.Controller;
+import mg.rr.framework.APIRest;      // ← corrigé
+import mg.rr.framework.HttpMethod;
+import mg.rr.framework.ModelAndView;
+import mg.rr.framework.SpringContext;
+import mg.rr.framework.UrlMapping;
 
 import java.util.List;
 

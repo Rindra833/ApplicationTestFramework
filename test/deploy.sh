@@ -6,7 +6,7 @@ SRC_DIR="src"
 WEB_DIR="WebContent"
 BUILD_DIR="build"
 LIB_DIR="WebContent/WEB-INF/lib"
-TOMCAT_WEBAPPS="${CATALINA_HOME}/webapps"
+TOMCAT_WEBAPPS="/home/rindra/Documents/S5/apache-tomcat-11.0.23/webapps"
 
 # Nettoyage
 rm -rf "$BUILD_DIR"

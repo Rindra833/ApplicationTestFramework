@@ -33,33 +33,34 @@ public class SpringContext {
      * Cree un ApplicationContext Spring sans dependance directe a Spring a la compilation.
      */
     private static Object createApplicationContext(ServletContext servletContext) {
-        String configLocation = servletContext.getInitParameter("contextConfigLocation");
-        if (configLocation == null || configLocation.trim().isEmpty()) {
-            configLocation = DEFAULT_CONFIG_LOCATION;
-        }
-
-        String realPath = servletContext.getRealPath(configLocation.trim());
-        if (realPath == null) {
-            throw new IllegalStateException("Impossible de localiser le fichier Spring : " + configLocation);
-        }
-
-        File configFile = new File(realPath);
-        if (!configFile.exists()) {
-            throw new IllegalStateException("Fichier Spring introuvable : " + realPath);
-        }
-
-        try {
-            Class<?> contextClass = Class.forName("org.springframework.context.support.FileSystemXmlApplicationContext");
-            Constructor<?> constructor = contextClass.getConstructor(String.class);
-            return constructor.newInstance(configFile.getAbsolutePath());
-        } catch (ClassNotFoundException e) {
-            throw new IllegalStateException("Spring n'est pas disponible. Verifiez spring-context, spring-beans, "
-                    + "spring-core et spring-expression dans WEB-INF/lib.", e);
-        } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException("Impossible de demarrer le contexte Spring depuis : "
-                    + configFile.getAbsolutePath(), e);
-        }
+    String configLocation = servletContext.getInitParameter("contextConfigLocation");
+    if (configLocation == null || configLocation.trim().isEmpty()) {
+        configLocation = DEFAULT_CONFIG_LOCATION;
     }
+
+    String realPath = servletContext.getRealPath(configLocation.trim());
+    if (realPath == null) {
+        throw new IllegalStateException("Impossible de localiser le fichier Spring : " + configLocation);
+    }
+
+    File configFile = new File(realPath);
+    if (!configFile.exists()) {
+        throw new IllegalStateException("Fichier Spring introuvable : " + realPath);
+    }
+
+    try {
+        Class<?> contextClass = Class.forName("org.springframework.context.support.FileSystemXmlApplicationContext");
+        Constructor<?> constructor = contextClass.getConstructor(String.class);
+        // IMPORTANT : prefixe "file:" pour forcer Spring a traiter le chemin comme absolu
+        return constructor.newInstance("file:" + configFile.getAbsolutePath());
+    } catch (ClassNotFoundException e) {
+        throw new IllegalStateException("Spring n'est pas disponible. Verifiez spring-context, spring-beans, "
+                + "spring-core et spring-expression dans WEB-INF/lib.", e);
+    } catch (ReflectiveOperationException e) {
+        throw new IllegalStateException("Impossible de demarrer le contexte Spring depuis : "
+                + configFile.getAbsolutePath(), e);
+    }
+}
 
     /**
      * Indique si un vrai contexte Spring a ete trouve au demarrage de l'application.
