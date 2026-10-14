@@ -53,11 +53,11 @@ public class FrontControllerServlet extends HttpServlet {
     }
 
     /**
-     * Sprint 6 : point de branchement JSON vs JSP.
-     *   1. Cas special "/" : page de debug (HTML)
-     *   2. Route introuvable : erreur (JSON si header Accept, sinon ServletException)
-     *   3. Route avec @APIRest(true)  -> bloc 1 : JSON, pas de dispatcher
-     *   4. Route sans @APIRest / false -> bloc 2 : ModelAndView + RequestDispatcher
+     * Point de branchement :
+     *   1. "/" (racine)     -> page de debug HTML
+     *   2. route == null    -> erreur (JSON si header Accept, sinon ServletException)
+     *   3. @APIRest(true)   -> BLOC 1 : JSON, aucun RequestDispatcher
+     *   4. sinon            -> BLOC 2 : ModelAndView + forward JSP
      */
     private void processRequest(HttpServletRequest req, HttpServletResponse res, HttpMethod httpMethod)
             throws ServletException, IOException {
@@ -97,14 +97,15 @@ public class FrontControllerServlet extends HttpServlet {
     }
 
     /**
-     * Sprint 6, bloc 1 : invoque la methode et serialise la valeur de retour en JSON.
-     * Content-Type: application/json;charset=UTF-8. Aucun forward.
+     * Sprint 6 + 7 : invoque la methode avec les parametres de la requete,
+     * serialise la valeur de retour en JSON. Aucun forward.
      */
     private void processApiRequest(HttpServletRequest req, HttpServletResponse res, RouteMapping route)
             throws IOException {
         res.setContentType("application/json;charset=UTF-8");
         try {
-            Object result = route.invoke(springContext);
+            // ✅ Sprint 7 : on passe req pour le binding des parametres
+            Object result = route.invoke(springContext, req);
             res.setStatus(HttpServletResponse.SC_OK);
             PrintWriter out = res.getWriter();
             out.write(JsonSerializer.toJson(result));
@@ -116,7 +117,7 @@ public class FrontControllerServlet extends HttpServlet {
     }
 
     /**
-     * Sprint 6 : ecrit une erreur JSON structuree.
+     * Ecrit une erreur JSON structuree.
      */
     private void writeJsonError(HttpServletResponse res, int status, String message) throws IOException {
         res.setStatus(status);
@@ -130,19 +131,19 @@ public class FrontControllerServlet extends HttpServlet {
     }
 
     /**
-     * Sprint 6 : indique si le client prefere du JSON (header Accept).
-     * Utilise uniquement pour le rendu des erreurs de routage.
+     * Indique si le client prefere du JSON (header Accept).
      */
     private boolean wantsJson(HttpServletRequest req) {
         String accept = req.getHeader("Accept");
         return accept != null && accept.contains("application/json");
     }
 
-    // ---------- Bloc 2 : rendu MVC (inchange depuis Sprint 5) ----------
+    // ---------- Bloc 2 : rendu MVC ----------
 
     private void dispatchModelAndView(HttpServletRequest req, HttpServletResponse res, RouteMapping route)
             throws ServletException, IOException {
-        Object result = invokeRoute(route);
+        // ✅ corrige : passer "route" et non "springContext"
+        Object result = invokeRoute(route, req);
 
         if (!(result instanceof ModelAndView)) {
             throw new ServletException("Type de retour invalide pour "
@@ -157,9 +158,9 @@ public class FrontControllerServlet extends HttpServlet {
         dispatcher.forward(req, res);
     }
 
-    private Object invokeRoute(RouteMapping route) throws ServletException {
+    private Object invokeRoute(RouteMapping route, HttpServletRequest req) throws ServletException {
         try {
-            return route.invoke(springContext);
+            return route.invoke(springContext, req);
         } catch (ReflectiveOperationException e) {
             throw new ServletException("Erreur pendant l'invocation de la methode "
                     + route.getMethod().getName(), e);
@@ -189,7 +190,7 @@ public class FrontControllerServlet extends HttpServlet {
     }
 
     /**
-     * Sprint 6 : la page de debug indique pour chaque route son mode : [VIEW] ou [API/JSON].
+     * Page de debug : [VIEW] ou [API/JSON] pour chaque route.
      */
     private void output(PrintWriter out) {
         out.println("<h3>Controleurs detectes</h3>");

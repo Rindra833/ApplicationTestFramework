@@ -18,7 +18,7 @@ mkdir -p "$BUILD_DIR/WEB-INF"
 echo ">>> Compilation..."
 CLASSPATH="$(echo $LIB_DIR/*.jar | tr ' ' ':')"
 find "$SRC_DIR" -name "*.java" > sources.txt
-javac -cp "$CLASSPATH" -d "$BUILD_DIR/WEB-INF/classes" @sources.txt
+javac -parameters -cp "$CLASSPATH" -d "$BUILD_DIR/WEB-INF/classes" @sources.txt
 rm -f sources.txt
 
 # Copie des ressources web

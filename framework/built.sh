@@ -39,7 +39,7 @@ find "$SRC_DIR" -type f -name "*.java" > sources.txt
 
 echo "Compilation du framework..."
 
-if ! javac -cp "$SERVLET_API_JAR" -d "$BUILD_DIR" @sources.txt 2> compile_errors.txt; then
+if ! javac -parameters -cp "$SERVLET_API_JAR" -d "$BUILD_DIR" @sources.txt 2> compile_errors.txt; then
     echo "Erreur de compilation du framework !"
     cat compile_errors.txt
     rm -f sources.txt
