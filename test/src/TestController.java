@@ -58,12 +58,13 @@ public class TestController {
         return new ModelAndView("form");   // forward vers form.jsp
     }
 
-    @UrlMapping(value = "/save", methode = HttpMethod.POST)
-    public ModelAndView save(String nom, int age, String email) {
-        ModelAndView mv = new ModelAndView("resultat");
-        mv.addAttribut("nom", nom);
-        mv.addAttribut("age", age);
-        mv.addAttribut("email", email);
+   @UrlMapping(value = "/save", methode = HttpMethod.POST)
+public ModelAndView save(Employee employee) {
+    ModelAndView mv = new ModelAndView("resultat");
+    mv.addAttribut("employee", employee);
+    mv.addAttribut("nom",   employee.getNom());
+    mv.addAttribut("age",   employee.getAge());
+    mv.addAttribut("email", employee.getEmail());
     return mv;
-    }
+}
 }
