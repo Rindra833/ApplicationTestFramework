@@ -138,5 +138,20 @@ Misy file ao @ formulaire
 ### Gestion de Session
 ### Autorisation
 
+### Sprint 8 : Upload de fichier    
+form ----------------------> Action(methode de controller)
+Il y a file dans @ formulaire
+- Il devrait avoir un moyen pour savoir s'il existe file avec donnée renvoyée
+- Qu'est ce qu'on fait quand on a le file?
 
+- Comment il va arriver dans @ Action/ il devrait etre diponible dans @ méthode d'action?
+    - Map (eventuellement)
+    - Objet tableau de byte (c'est la solution) créer classe (ex:MaFile- fileName, Type(extension), TableByte)
+        Ceci est instancé dans le framework
+        Regarder si MaFile est le type du file de @ formulaire puis on l'emploie ensuite 
 
+On le met ou apres?
+- soit sauv dans bdd
+- Soit sauv dans fichier
+
+On doit avoir un chemin pour le stocker,c'est un variable (ex mettre dans propertie perso) (ne pas faire en dur)

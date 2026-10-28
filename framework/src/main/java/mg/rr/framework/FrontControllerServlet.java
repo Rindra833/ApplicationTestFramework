@@ -2,6 +2,7 @@ package mg.rr.framework;
 
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -9,6 +10,13 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+
+@MultipartConfig( 
+    fileSizeThreshold = 1024 * 1024,      // 1 MB en mémoire avant écriture disque
+    maxFileSize = 1024 * 1024 * 10,       // 10 MB max par fichier
+    maxRequestSize = 1024 * 1024 * 50     // 50 MB max par requête (plusieurs fichiers)
+)
 
 public class FrontControllerServlet extends HttpServlet {
 

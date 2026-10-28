@@ -1,6 +1,8 @@
 package mg.rr.framework;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.Part;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 
@@ -27,28 +29,27 @@ public class RouteMapping {
     }
 
     /**
-     * Sprint 7 : construit les arguments de la methode a partir de la requete.
-     *   - Aucun parametre                        -> invoke() simple
-     *   - SpringContext en parametre             -> injecte le contexte
-     *   - Autre type                             -> matching par NOM avec
-     *                                               request.getParameter(nom)
-     *                                               puis conversion
+     * Sprint 7 BIS : binding objet.
+     * Pour chaque parametre :
+     *   1. SpringContext        -> injecte le contexte
+     *   2. String / primitif    -> request.getParameter(nom)
+     *   3. POJO (Employee, ...) -> instancie + remplit ses champs
+     *                              a partir des parametres de la requete
      */
-    public Object invoke(SpringContext springContext, HttpServletRequest request)
+   public Object invoke(SpringContext springContext, HttpServletRequest request)
             throws ReflectiveOperationException {
         Object controller = controllerClass.getDeclaredConstructor().newInstance();
         method.setAccessible(true);
 
         Class<?>[] types = method.getParameterTypes();
-        if (types.length == 0) {
-            return method.invoke(controller);
-        }
+        if (types.length == 0) return method.invoke(controller);
 
         Parameter[] params = method.getParameters();
         Object[] args = new Object[types.length];
 
         for (int i = 0; i < types.length; i++) {
             Class<?> type = types[i];
+            String paramName = params[i].getName();
 
             // 1. SpringContext
             if (type.equals(SpringContext.class)) {
@@ -56,19 +57,106 @@ public class RouteMapping {
                 continue;
             }
 
-            // 2. Parametre de formulaire : matching par NOM
-            String paramName = params[i].getName();
-            String rawValue = request == null ? null : request.getParameter(paramName);
-            args[i] = convert(rawValue, type);
+            // 2. HttpServletRequest (utile pour lire uploadPath ou faire des choses custom)
+            if (type.equals(HttpServletRequest.class)) {
+                args[i] = request;
+                continue;
+            }
+
+            // 3. Fichier (Sprint 8)
+            if (type.equals(MaFile.class)) {
+                args[i] = extractFile(request, paramName);
+                continue;
+            }
+
+            // 4. Type simple (Sprint 7)
+            if (isSimpleType(type)) {
+                String rawValue = request == null ? null : request.getParameter(paramName);
+                args[i] = convert(rawValue, type);
+                continue;
+            }
+
+            // 5. POJO (Sprint 7 BIS)
+            args[i] = bindObject(type, request);
         }
 
         return method.invoke(controller, args);
     }
 
     /**
-     * Conversion String -> type Java attendu.
-     * Valeurs par defaut pour les primitifs si absent.
+     * Sprint 8 : extrait un fichier multipart de la requete.
+     * Retourne null si le champ n'est pas un fichier ou s'il est vide.
      */
+        private static MaFile extractFile(HttpServletRequest request, String paramName) {
+        if (request == null) return null;
+        try {
+            Part part = request.getPart(paramName);
+            if (part == null || part.getSize() == 0) {
+                return null; // champ non rempli
+            }
+
+            MaFile mf = new MaFile();
+            mf.setFileName(part.getSubmittedFileName());
+            mf.setType(part.getContentType());
+
+            // Lecture du flux binaire
+            try (java.io.InputStream is = part.getInputStream()) {
+                mf.setContent(is.readAllBytes()); // Java 9+
+            }
+            return mf;
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur lecture fichier '" + paramName + "' : " + e.getMessage(), e);
+        }
+    }
+
+    // ---------- Helpers ----------
+
+    /** Types qui se convertissent directement depuis une chaine. */
+    private static boolean isSimpleType(Class<?> type) {
+        return type == String.class
+            || type == Integer.class || type == int.class
+            || type == Long.class    || type == long.class
+            || type == Double.class  || type == double.class
+            || type == Float.class   || type == float.class
+            || type == Boolean.class || type == boolean.class
+            || type == Short.class   || type == short.class
+            || type == Byte.class    || type == byte.class
+            || type == Character.class || type == char.class;
+    }
+
+    /**
+     * Instancie le POJO (constructeur sans argument) puis remplit ses champs
+     * (publics ou prives) avec les parametres de la requete par nom.
+     */
+    private static Object bindObject(Class<?> type, HttpServletRequest request)
+            throws ReflectiveOperationException {
+        Object instance;
+        try {
+            instance = type.getDeclaredConstructor().newInstance();
+        } catch (NoSuchMethodException e) {
+            throw new IllegalArgumentException("La classe " + type.getName()
+                    + " doit avoir un constructeur sans argument pour le binding.");
+        }
+
+        if (request == null) {
+            return instance;
+        }
+
+        // Parcours de tous les champs declares (publics ou prives)
+        for (Field field : type.getDeclaredFields()) {
+            String name = field.getName();
+            String value = request.getParameter(name);
+            if (value == null) continue;   // champ non fourni → on laisse la valeur par defaut
+
+            field.setAccessible(true);
+            Object converted = convert(value, field.getType());
+            field.set(instance, converted);
+        }
+
+        return instance;
+    }
+
+    /** Conversion String -> type Java (String, primitif, enveloppes). */
     private static Object convert(String value, Class<?> type) {
         if (type.equals(String.class)) {
             return value;
@@ -94,6 +182,7 @@ public class RouteMapping {
         if (type == byte.class || type == Byte.class)         return Byte.parseByte(value);
         if (type == char.class || type == Character.class)    return value.charAt(0);
 
+        // Type non gere : on renvoie la chaine brute
         return value;
     }
 
