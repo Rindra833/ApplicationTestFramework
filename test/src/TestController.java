@@ -6,6 +6,10 @@ import mg.rr.framework.HttpMethod;
 import mg.rr.framework.ModelAndView;
 import mg.rr.framework.SpringContext;
 import mg.rr.framework.UrlMapping;
+import mg.rr.framework.MaFile;                         // ← nouveau
+import jakarta.servlet.http.HttpServletRequest;        // ← nouveau
+import java.io.File;                                   // ← nouveau
+import java.nio.file.Files;
 
 import java.util.List;
 
@@ -59,12 +63,38 @@ public class TestController {
     }
 
    @UrlMapping(value = "/save", methode = HttpMethod.POST)
-public ModelAndView save(Employee employee) {
-    ModelAndView mv = new ModelAndView("resultat");
-    mv.addAttribut("employee", employee);
-    mv.addAttribut("nom",   employee.getNom());
-    mv.addAttribut("age",   employee.getAge());
-    mv.addAttribut("email", employee.getEmail());
-    return mv;
-}
+    public ModelAndView save(Employee employee, MaFile photo, HttpServletRequest request) {
+        ModelAndView mv = new ModelAndView("resultat");
+        
+        mv.addAttribut("employee", employee);
+
+        // Vérification de l'existence du fichier
+        if (photo != null && photo.exists()) {
+            try {
+                // Récupération du chemin depuis web.xml
+                String uploadDir = request.getServletContext().getInitParameter("uploadPath");
+                if (uploadDir == null) {
+                    uploadDir = System.getProperty("java.io.tmpdir"); // fallback de sécurité
+                }
+
+                // Création du dossier s'il n'existe pas
+                File dir = new File(uploadDir);
+                if (!dir.exists()) dir.mkdirs();
+
+                // Sauvegarde du fichier sur le disque
+                File dest = new File(dir, photo.getFileName());
+                Files.write(dest.toPath(), photo.getContent());
+
+                mv.addAttribut("fichierMessage", "Fichier sauvegardé avec succès dans : " + dest.getAbsolutePath());
+                mv.addAttribut("fichierNom", photo.getFileName());
+                mv.addAttribut("fichierTaille", photo.getContent().length);
+            } catch (Exception e) {
+                mv.addAttribut("fichierMessage", "Erreur sauvegarde : " + e.getMessage());
+            }
+        } else {
+            mv.addAttribut("fichierMessage", "Aucun fichier fourni ou fichier vide.");
+        }
+
+        return mv;
+    }
 }
