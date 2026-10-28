@@ -33,6 +33,10 @@
             <param-value>.jsp</param-value>
         </init-param>
         <load-on-startup>1</load-on-startup>
+            <init-param>
+        <param-name>sessionTimeoutMinutes</param-name>
+        <param-value>30</param-value>
+    </init-param>
     </servlet>
 
     <servlet-mapping>

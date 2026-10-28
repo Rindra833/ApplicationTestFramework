@@ -6,7 +6,8 @@ import mg.rr.framework.HttpMethod;
 import mg.rr.framework.ModelAndView;
 import mg.rr.framework.SpringContext;
 import mg.rr.framework.UrlMapping;
-import mg.rr.framework.MaFile;                         // ← nouveau
+import mg.rr.framework.MaFile;   
+import mg.rr.framework.Session;                      // ← nouveau
 import jakarta.servlet.http.HttpServletRequest;        // ← nouveau
 import java.io.File;                                   // ← nouveau
 import java.nio.file.Files;
@@ -97,4 +98,41 @@ public class TestController {
 
         return mv;
     }
+
+   // 1. Afficher le formulaire (GET)
+@UrlMapping(value = "/login", methode = HttpMethod.GET)
+public ModelAndView afficherLogin() {
+    return new ModelAndView("login");
+}
+
+// 2. Traiter le formulaire (POST) - C'est ta méthode existante
+@UrlMapping(value = "/login", methode = HttpMethod.POST)
+public ModelAndView login(String username, Session session) {
+    // On stocke le nom dans la session
+    session.setAttribute("user", username);
+    return new ModelAndView("welcome");
+}
+
+@UrlMapping("/profil")
+public ModelAndView profil(Session session) {
+    String user = (String) session.getAttribute("user");
+    
+    if (user == null) {
+        ModelAndView mv = new ModelAndView("error");
+        mv.addAttribut("message", "Vous devez être connecté.");
+        return mv;
+    }
+
+    ModelAndView mv = new ModelAndView("profil");
+    mv.addAttribut("user", user);
+    mv.addAttribut("sessionId", session.getId());
+    return mv;
+}
+
+@UrlMapping("/logout")
+public ModelAndView logout(Session session) {
+    session.invalidate(); // Ou supprimer juste "user"
+    return new ModelAndView("welcome"); 
+}
+
 }

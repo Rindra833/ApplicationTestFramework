@@ -69,6 +69,12 @@ Prise en charge des types de methode http (GET/POST)
     - creation d'un fonction pour ajouter data du model dans le request SErvlet : addArgToRequest(req, map)
     - creation d'un dispatcher qui envoye vers la page correspondant au vu
 
+### Spriny 5-bis Accès base
+On doit implémenter une accès à la base
+(on va faire sprint 5bis vite fait. J'ai oublié, vous pouvez le voir dans le TODO avec très peu d'explication (**### Spriny 5-bis Accès base**
+On doit implémenter une accès à la base) Mais à vous de savoir ce qu'il faut faire (car l'idée c'est de pouvoir utiliser des données depuis un base) Pour le test j'ai ici Mysql (Server version: 8.0.46 MySQL Community Server - GPL) installer avec login:root et mdp: "password" pour la configuration dans l'app.
+Posez vos question si vous voulez, allez-y maintenant)
+
 ### Sprint 6 : REST API
 - On va implémenter Web API pour retourner un JSON
 Objectif: 
@@ -123,6 +129,7 @@ Objectif: faire enregistrer les données envoyées depuis un formulaire par para
 ## Sprint 7 : Binding BIS
 Binding object
 formulaire donne un employee----------------> elle va tout de suite être utilisé comme un objet, non comme sprint 7
+- Capacité de faire prendre un liste d'objet (recursion et contenant une liste d'objet)
 
 ### Sprint 8 : Upload ana fichier    
 form ----------------------> Action(methode de controller)
@@ -135,23 +142,35 @@ Misy file ao @ formulaire
     - Objet tableau de byte (c'est la solution) Mamorona classe (ex:MaFile- fileName, Type(extension), TableByte)
         Ceci est instancé dans le framework
         Jerena raha MaFile ny type anle file avy @ formulaire de ampiasaina amazay io
-### Gestion de Session
-### Autorisation
 
-### Sprint 8 : Upload de fichier    
-form ----------------------> Action(methode de controller)
-Il y a file dans @ formulaire
-- Il devrait avoir un moyen pour savoir s'il existe file avec donnée renvoyée
-- Qu'est ce qu'on fait quand on a le file?
+Atao aiza avieo?
+- soit sauv anaty bdd
+- Soit sauv anaty fichier
 
-- Comment il va arriver dans @ Action/ il devrait etre diponible dans @ méthode d'action?
-    - Map (eventuellement)
-    - Objet tableau de byte (c'est la solution) créer classe (ex:MaFile- fileName, Type(extension), TableByte)
-        Ceci est instancé dans le framework
-        Regarder si MaFile est le type du file de @ formulaire puis on l'emploie ensuite 
+Mila mana chemin i-stockena azy, variable (ex atao anaty propertie perso) izy io (tsy azo atao en dur)
 
-On le met ou apres?
-- soit sauv dans bdd
-- Soit sauv dans fichier
+### Sprint 9  : Gestion de Session
+il faut que session user disponible dans le controlleur - il faut qu'elle soit disponible dans la méthode d'action du controlleur
+manamboatra classe  perso session, de rehefa hitany methode d'action ilay izy de injecteny (créer, modif, suppr)
 
-On doit avoir un chemin pour le stocker,c'est un variable (ex mettre dans propertie perso) (ne pas faire en dur)
+Pour chaque session ilay ihany, eviter le problème de mémoire
+
+Objectif, éviter d'intégrer le http session au niveau du developpeur, il faut qu'on utilise plutôt notre propre session
+
+un instance session par client -> stocker dans un map dans le contexte (pour que ce soit un par client)
+
+
+
+### Sprint 10 : Authaurisation
+Autorisation : methode controlleur manisiny autorisation izay vao afaka mampiasa / ou mila rôle admin
+
+### Singleton du controlleur
+ampirimina anay context hash, verifier si il existe d'abord
+
+## Sprint 10:Bis
+methode d'action (anaty contr dev) <- connecté(obligatoire authentifié) -> execute
+
+## Sprint 10:Bis Bis
+connecté + role specifique -> execute
+On peut ajouter plusiuers roles 
+

@@ -11,19 +11,18 @@ import java.io.PrintWriter;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-
 @MultipartConfig( 
     fileSizeThreshold = 1024 * 1024,      // 1 MB en mémoire avant écriture disque
     maxFileSize = 1024 * 1024 * 10,       // 10 MB max par fichier
     maxRequestSize = 1024 * 1024 * 50     // 50 MB max par requête (plusieurs fichiers)
 )
-
 public class FrontControllerServlet extends HttpServlet {
 
     private MappingRegistry registry;
     private SpringContext springContext;
     private String viewPrefix;
     private String viewSuffix;
+    private SessionManager sessionManager;
 
     @Override
     public void init() throws ServletException {
@@ -46,6 +45,17 @@ public class FrontControllerServlet extends HttpServlet {
             springContext = SpringContext.fromServletContext(getServletContext());
             getServletContext().setAttribute(FrameworkContextListener.SPRING_CONTEXT_ATTRIBUTE, springContext);
         }
+        
+        // Initialiser le SessionManager (timeout par défaut 30 min)
+        String timeoutMin = getConfiguredValue("sessionTimeoutMinutes", "30");
+        long timeoutMillis = Long.parseLong(timeoutMin) * 60L * 1000L;
+        this.sessionManager = new SessionManager(timeoutMillis);
+    }
+
+    @Override
+    public void destroy() {
+        if (sessionManager != null) sessionManager.shutdown();
+        super.destroy();
     }
 
     @Override
@@ -105,15 +115,15 @@ public class FrontControllerServlet extends HttpServlet {
     }
 
     /**
-     * Sprint 6 + 7 : invoque la methode avec les parametres de la requete,
-     * serialise la valeur de retour en JSON. Aucun forward.
+     * Sprint 6 + 7 + 8 + 9 : invoque la methode avec les parametres de la requete,
+     * la session, le multipart, et serialise la valeur de retour en JSON.
      */
     private void processApiRequest(HttpServletRequest req, HttpServletResponse res, RouteMapping route)
             throws IOException {
         res.setContentType("application/json;charset=UTF-8");
         try {
-            // ✅ Sprint 7 : on passe req pour le binding des parametres
-            Object result = route.invoke(springContext, req);
+            // Sprint 9 : on passe req, res et sessionManager
+            Object result = route.invoke(springContext, req, res, sessionManager);
             res.setStatus(HttpServletResponse.SC_OK);
             PrintWriter out = res.getWriter();
             out.write(JsonSerializer.toJson(result));
@@ -150,8 +160,8 @@ public class FrontControllerServlet extends HttpServlet {
 
     private void dispatchModelAndView(HttpServletRequest req, HttpServletResponse res, RouteMapping route)
             throws ServletException, IOException {
-        // ✅ corrige : passer "route" et non "springContext"
-        Object result = invokeRoute(route, req);
+        // ✅ Correction : on passe bien res à invokeRoute
+        Object result = invokeRoute(route, req, res);
 
         if (!(result instanceof ModelAndView)) {
             throw new ServletException("Type de retour invalide pour "
@@ -166,9 +176,10 @@ public class FrontControllerServlet extends HttpServlet {
         dispatcher.forward(req, res);
     }
 
-    private Object invokeRoute(RouteMapping route, HttpServletRequest req) throws ServletException {
+    private Object invokeRoute(RouteMapping route, HttpServletRequest req, HttpServletResponse res) throws ServletException {
         try {
-            return route.invoke(springContext, req);
+            // ✅ Correction : ajout de res et sessionManager
+            return route.invoke(springContext, req, res, sessionManager);
         } catch (ReflectiveOperationException e) {
             throw new ServletException("Erreur pendant l'invocation de la methode "
                     + route.getMethod().getName(), e);
