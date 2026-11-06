@@ -135,4 +135,8 @@ public ModelAndView logout(Session session) {
     return new ModelAndView("welcome"); 
 }
 
+public TestController() {
+    System.out.println("INSTANCIATION DU CONTROLEUR !");
+}
+
 }

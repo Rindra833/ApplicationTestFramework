@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-APP_NAME="sprint9"
+APP_NAME="sprint10"
 SRC_DIR="src"
 WEB_DIR="WebContent"
 BUILD_DIR="build"

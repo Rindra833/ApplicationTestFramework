@@ -30,13 +30,11 @@ public class RouteMapping {
     }
 
     /**
-     * Sprint 9 : signature mise a jour avec HttpServletResponse et SessionManager.
+     * Sprint 10 : recoit maintenant l'instance unique du controller
      */
-    public Object invoke(SpringContext springContext, HttpServletRequest request,
-                         HttpServletResponse response, SessionManager sessionManager)
-            throws ReflectiveOperationException {
+    public Object invoke(Object controller, SpringContext springContext, HttpServletRequest request, 
+        HttpServletResponse response, SessionManager sessionManager) throws ReflectiveOperationException {
 
-        Object controller = controllerClass.getDeclaredConstructor().newInstance();
         method.setAccessible(true);
 
         Class<?>[] types = method.getParameterTypes();
@@ -179,9 +177,4 @@ public class RouteMapping {
         return value;
     }
 
-    public Object invoke() throws ReflectiveOperationException {
-        Object controller = controllerClass.getDeclaredConstructor().newInstance();
-        method.setAccessible(true);
-        return method.invoke(controller);
-    }
 }

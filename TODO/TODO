@@ -161,16 +161,44 @@ un instance session par client -> stocker dans un map dans le contexte (pour que
 
 
 
-### Sprint 10 : Authaurisation
-Autorisation : methode controlleur manisiny autorisation izay vao afaka mampiasa / ou mila rôle admin
+### Sprint 10 : Autorisation
+Autorisation : methode controlleur donne l'autorisation afin de pouvoir l'utiliser / ou a besoin de rôle admin
 
 ### Singleton du controlleur
-ampirimina anay context hash, verifier si il existe d'abord
+On met dans context hash, verifier si il existe d'abord
 
 ## Sprint 10:Bis
-methode d'action (anaty contr dev) <- connecté(obligatoire authentifié) -> execute
+methode d'action (dans contr dev) <- connecté(obligatoire authentifié) -> execute
 
 ## Sprint 10:Bis Bis
 connecté + role specifique -> execute
 On peut ajouter plusiuers roles 
 
+
+## Sprint 10 et 10 Bis: Authentification et autorisation
+- Création de l'annotation Auth :
+  - Applicable au niveau de la classe (TYPE) et de la méthode (METHOD).
+  - Ajout de l'attribut role avec une valeur par défaut "".
+  - Si le rôle est vide, seule l'authentification est nécessaire.
+  - Si un rôle est précisé, l'utilisateur doit posséder ce rôle pour accéder à la ressource.
+- Gestion des erreurs d'accès dans ResponseHelper :
+  - Ajout de la fonction handleUnauthorized pour gérer les erreurs d'authentification (HTTP 401) :
+    - Session inexistante ou utilisateur non authentifié.
+  - Ajout de la fonction handleForbidden pour gérer les erreurs d'autorisation (HTTP 403) :
+    - Utilisateur authentifié, mais ne possédant pas le rôle requis.
+- Gestion des réponses selon le type de requête :
+  - Réponse JSON pour les requêtes API.
+  - Réponse HTML pour les pages web.
+- Configuration du nom de l'attribut de rôle de session :
+  - Récupération du nom de la variable contenant le rôle de l'utilisateur depuis le web.xml dans FrontControllerListener.
+  - Stockage de cette configuration dans le ServletContext pour la rendre accessible au FrontController.
+- Vérification des autorisations dans FrontController :
+  - Création de la fonction checkAuthorization pour vérifier les accès avant l'invocation de la méthode du contrôleur :
+    - Récupération de l'annotation Auth sur la méthode, puis sur la classe si elle est absente.
+    - Priorité à l'annotation de la méthode par rapport à celle de la classe.
+    - Vérification de l'existence de la session et de l'attribut contenant le rôle de l'utilisateur.
+    - Si le rôle requis est vide, autorisation de l'accès après authentification.
+    - Si un rôle est requis, vérification de sa présence dans l'attribut de session, qui peut contenir un rôle unique (String) ou plusieurs rôles (Collection).
+    - Appel de handleUnauthorized si l'utilisateur n'est pas authentifié.
+    - Appel de handleForbidden si l'utilisateur est authentifié, mais ne possède pas le rôle requis.
+  - Arrêt du traitement de la requête en cas de refus d'accès.

@@ -122,8 +122,9 @@ public class FrontControllerServlet extends HttpServlet {
             throws IOException {
         res.setContentType("application/json;charset=UTF-8");
         try {
-            // Sprint 9 : on passe req, res et sessionManager
-            Object result = route.invoke(springContext, req, res, sessionManager);
+            Object controller = registry.getControllerInstance(route.getControllerClass());
+            // Sprint 9 : on passe req, res et sessionManager + Sprint 10 : controller
+            Object result = route.invoke(controller, springContext, req, res, sessionManager);
             res.setStatus(HttpServletResponse.SC_OK);
             PrintWriter out = res.getWriter();
             out.write(JsonSerializer.toJson(result));
@@ -178,8 +179,8 @@ public class FrontControllerServlet extends HttpServlet {
 
     private Object invokeRoute(RouteMapping route, HttpServletRequest req, HttpServletResponse res) throws ServletException {
         try {
-            // ✅ Correction : ajout de res et sessionManager
-            return route.invoke(springContext, req, res, sessionManager);
+            Object controller = registry.getControllerInstance(route.getControllerClass());
+            return route.invoke(controller, springContext, req, res, sessionManager);
         } catch (ReflectiveOperationException e) {
             throw new ServletException("Erreur pendant l'invocation de la methode "
                     + route.getMethod().getName(), e);

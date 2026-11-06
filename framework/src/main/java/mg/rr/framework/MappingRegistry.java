@@ -3,11 +3,14 @@ package mg.rr.framework;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MappingRegistry {
     private final List<Class<?>> controllers;
     private final Map<UrlMethode, RouteMapping> routes;
 
+    // Sprint 10 : Singleton
+    private final Map<Class<?>, Object> controllerInstances = new ConcurrentHashMap<>(); 
     /**
      * Stocke les controleurs trouves et la table de routage construite au demarrage.
      */
@@ -54,5 +57,18 @@ public class MappingRegistry {
         }
 
         return builder.toString();
+    }
+
+    // Sprint 10: recupere ou cree l'instance unique de controller
+    // on utilise computeIfAbsent pour la thread-safety
+    public Object getControllerInstance(Class<?> clazz) {
+        return controllerInstances.computeIfAbsent(clazz, c -> {
+            try {
+                return c.getDeclaredConstructor().newInstance();
+            } catch (Exception e) {
+                throw new RuntimeException("Impossible d'instancier le controlleur : " + c.getName(), e);
+
+            }
+        });
     }
 }
