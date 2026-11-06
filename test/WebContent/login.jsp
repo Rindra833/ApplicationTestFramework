@@ -6,8 +6,14 @@
     <h1>Connexion</h1>
     <!-- TRÈS IMPORTANT : method="post" et action="login" -->
     <form action="login" method="post">
-        <p>Nom d'utilisateur : <input type="text" name="username" required /></p>
-        <button type="submit">Se connecter</button>
-    </form>
+    <p>Nom : <input type="text" name="username" required/></p>
+    <p>Rôle : 
+        <select name="role">
+            <option value="user">Utilisateur</option>
+            <option value="admin">Administrateur</option>
+        </select>
+    </p>
+    <button type="submit">Connexion</button>
+</form>
 </body>
 </html>

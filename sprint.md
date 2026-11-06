@@ -15,3 +15,7 @@ cd test
 rm -rf build dist
 ./deploy.sh
 
+## Verification
+
+http://localhost:8080/sprint6/admin-panel
+http://localhost:8080/sprint6/api/admin-stats

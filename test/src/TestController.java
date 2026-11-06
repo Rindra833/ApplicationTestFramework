@@ -7,7 +7,8 @@ import mg.rr.framework.ModelAndView;
 import mg.rr.framework.SpringContext;
 import mg.rr.framework.UrlMapping;
 import mg.rr.framework.MaFile;   
-import mg.rr.framework.Session;                      // ← nouveau
+import mg.rr.framework.Session;   
+import mg.rr.framework.Auth;                   // ← nouveau
 import jakarta.servlet.http.HttpServletRequest;        // ← nouveau
 import java.io.File;                                   // ← nouveau
 import java.nio.file.Files;
@@ -105,15 +106,20 @@ public ModelAndView afficherLogin() {
     return new ModelAndView("login");
 }
 
-// 2. Traiter le formulaire (POST) - C'est ta méthode existante
-@UrlMapping(value = "/login", methode = HttpMethod.POST)
-public ModelAndView login(String username, Session session) {
-    // On stocke le nom dans la session
-    session.setAttribute("user", username);
-    return new ModelAndView("welcome");
-}
+    // --- Authentification (Sprint 10 Bis) ---
 
-@UrlMapping("/profil")
+    @UrlMapping(value = "/login", methode = HttpMethod.POST)
+    public ModelAndView login(String username, String role, Session session) {
+        // On stocke le nom et le rôle dans la session
+        session.setAttribute("user", username);
+        session.setAttribute("userRole", role); // Ex: "admin" ou "user"
+        
+        ModelAndView mv = new ModelAndView("welcome");
+        mv.addAttribut("user", username);
+        return mv;
+    }
+
+    @UrlMapping("/profil")
 public ModelAndView profil(Session session) {
     String user = (String) session.getAttribute("user");
     
@@ -128,6 +134,34 @@ public ModelAndView profil(Session session) {
     mv.addAttribut("sessionId", session.getId());
     return mv;
 }
+    // --- Autorisation ---
+
+    // Route qui exige juste d'être connecté (pas de rôle spécifique)
+    @Auth
+    @UrlMapping("/espace-membre")
+    public ModelAndView espaceMembre(Session session) {
+        String user = (String) session.getAttribute("user");
+        ModelAndView mv = new ModelAndView("membre");
+        mv.addAttribut("message", "Bienvenue dans l'espace membre, " + user);
+        return mv;
+    }
+
+    // Route qui exige le rôle "admin"
+    @Auth(role = "admin")
+    @UrlMapping("/admin-panel")
+    public ModelAndView adminPanel() {
+        ModelAndView mv = new ModelAndView("admin");
+        mv.addAttribut("message", "Bienvenue sur le panneau d'administration.");
+        return mv;
+    }
+
+    // Route API qui exige le rôle "admin" (retourne du JSON)
+    @Auth(role = "admin")
+    @APIRest(true)
+    @UrlMapping("/api/admin-stats")
+    public Object adminStats() {
+        return java.util.Map.of("stats", "OK", "users", 42);
+    }
 
 @UrlMapping("/logout")
 public ModelAndView logout(Session session) {

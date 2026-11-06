@@ -23,6 +23,7 @@ public class FrontControllerServlet extends HttpServlet {
     private String viewPrefix;
     private String viewSuffix;
     private SessionManager sessionManager;
+    private String authRoleAttribute;
 
     @Override
     public void init() throws ServletException {
@@ -50,6 +51,8 @@ public class FrontControllerServlet extends HttpServlet {
         String timeoutMin = getConfiguredValue("sessionTimeoutMinutes", "30");
         long timeoutMillis = Long.parseLong(timeoutMin) * 60L * 1000L;
         this.sessionManager = new SessionManager(timeoutMillis);
+        this.authRoleAttribute = (String) getServletContext().getAttribute(FrameworkContextListener.AUTH_ROLE_ATTRIBUTE);
+    if (this.authRoleAttribute == null) this.authRoleAttribute = "role";
     }
 
     @Override
@@ -101,6 +104,11 @@ public class FrontControllerServlet extends HttpServlet {
                 return;
             }
             throw new ServletException(message);
+        }
+
+        // SPRINT 10 BIS : Vérification d'accès
+        if (!checkAuthorization(route, req, res)) {
+            return; // Accès refusé, on arrête le traitement
         }
 
         // (3) API REST : retour JSON, aucun RequestDispatcher
@@ -254,5 +262,63 @@ public class FrontControllerServlet extends HttpServlet {
     private String getConfiguredValue(String name, String defaultValue) {
         String value = getServletConfig().getInitParameter(name);
         return value == null ? defaultValue : value;
+    }
+
+        /**
+     * SPRINT 10 BIS : Vérifie l'authentification et les rôles.
+     */
+    private boolean checkAuthorization(RouteMapping route, HttpServletRequest req, HttpServletResponse res)
+            throws IOException {
+        // 1. Chercher @Auth sur la méthode
+        Auth auth = route.getMethod().getAnnotation(Auth.class);
+        
+        // 2. Si absent, chercher sur la classe (Priorité à la méthode)
+        if (auth == null) {
+            auth = route.getControllerClass().getAnnotation(Auth.class);
+        }
+
+        // 3. Si aucune annotation, l'accès est libre
+        if (auth == null) {
+            return true; 
+        }
+
+        boolean isApi = route.isApiRest() || wantsJson(req);
+        Session session = sessionManager.getSession(req, res);
+
+        // 4. Vérifier l'authentification (l'utilisateur a-t-il le rôle en session ?)
+        Object roleValue = session.getAttribute(authRoleAttribute);
+
+        if (roleValue == null) {
+            // Pas de rôle en session = pas connecté
+            ResponseHelper.handleUnauthorized(res, isApi);
+            return false;
+        }
+
+        // 5. Si le rôle demandé est vide, être connecté suffit
+        String requiredRole = auth.role();
+        if (requiredRole == null || requiredRole.trim().isEmpty()) {
+            return true;
+        }
+
+        // 6. Si un rôle spécifique est demandé, on vérifie
+        boolean hasRole = false;
+        if (roleValue instanceof String) {
+            hasRole = requiredRole.equals((String) roleValue);
+        } else if (roleValue instanceof java.util.Collection) {
+            for (Object r : (java.util.Collection<?>) roleValue) {
+                if (requiredRole.equals(String.valueOf(r))) {
+                    hasRole = true;
+                    break;
+                }
+            }
+        }
+
+        if (!hasRole) {
+            // L'utilisateur est connecté, mais n'a pas le bon rôle
+            ResponseHelper.handleForbidden(res, isApi);
+            return false;
+        }
+
+        return true;
     }
 }
